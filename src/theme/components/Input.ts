@@ -8,7 +8,7 @@ const baseStyle = definePartsStyle({
     field: {
         fontFamily: 'Kumbh Sans, sans-serif',
         color: 'dark.blue',
-        px: '2em',
+        px: '1em',
         _placeholder: {
             color: 'gray.medium'
         }

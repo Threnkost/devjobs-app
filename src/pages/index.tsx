@@ -1,64 +1,108 @@
-import { Box, Grid, GridItem, Heading, Input, InputGroup, InputRightElement, Button, IconButton, HStack } from '@chakra-ui/react'
-import Card from '@/components/Card'
-import FilterModal from '@/components/FilterModal'
+import { Box, Image as ChakraImage, Grid, GridItem, useColorModeValue, useDisclosure } from '@chakra-ui/react'
 import Image from 'next/image'
+import { Company } from '@/types/company'
+import JobCard from '@/components/JobCard'
+import { useFilter } from '@/hooks/useFilter'
+import FilterModal from '@/components/FilterModal'
+import { ResponsiveSearchBar } from '@/components/ResponsiveSearchBar'
+import { fetchData } from '@/utils/fetchData'
+import { Pattern } from '@/components/Pattern'
+import { ThemeToggleButton } from '@/components/ThemeToggleButton'
 
 
-const App = () => {
+export async function getStaticProps() {
+    return {
+        props: {
+            data: fetchData(),
+        },
+    }
+}
 
-  return (
-    <Box w='100vw' minH='100vh' bg='gray.light' position='relative' zIndex='0'>
-      <Box position='absolute' top='0' left='0' bg='violet.medium' w='100%' h='136px' zIndex='1' />
-      <Grid position='relative' templateColumns='1fr' px='24px' pt='32px' zIndex='2' rowGap='32px'>
 
-        <FilterModal isOpen={false} />
+const singleColumn = { base: 1, md: 2, lg: 3 }
 
-        {/*
-          TODO Daha sonra kutucuk büyüklüklerini ve boşluklarını pixel-perfect yap.
-        */}
-        <GridItem>
-          <Heading size='xl' color='white'>devjobs</Heading>
-        </GridItem>
 
-        <GridItem>
-          <InputGroup>
-            {/*BUG Bu kısımda input içerisindeki text butonları aşıp geçiyor. */}
-            <InputRightElement h='100%' pointerEvents='none' mr='2.5em'>
-              <HStack spacing='24px'>
-                <Image 
-                  src='assets/filter.svg'
-                  alt=''
-                  width={20}
-                  height={20}
-                />
-                <IconButton aria-label='Search' bg='violet.medium' icon={<></>} w='48px' h='48px' />
-              </HStack>
-            </InputRightElement>
-            <Input
-              placeholder='Filter by title...'
-              h='80px'
-              bg='white'
-              border='none'
-            />
-          </InputGroup>
-        </GridItem>
+const App = ({ data }: { data: Array<Company> }) => {
 
-        <GridItem>
-          <Card
-            typeOfWork='Full Time'
-            department='Senior Software Engineer'
-            country='United Kingdom'
-            company='Scoot'
-          />
-        </GridItem>
+    const background = useColorModeValue('gray.light', 'dark.midnight')
 
-        <Button
-          variant='primary'
+    const [filteredJobs, dispatch] = useFilter({
+        defaultSource  : data,
+        defaultQuery   : '',
+        defaultLocation: '',
+        keywords       : {
+            query       : ['company', 'position'],
+            location    : 'location',
+            fullTimeOnly: 'contract'
+        }
+    })
+    const { isOpen, onOpen, onClose } = useDisclosure()
+
+    return (
+
+        <Box
+            w    = 'max(100%, 320px)'
+            minH = '100vh'
+            pt   = {{ base: '32px', md: '42px', lg: '44px' }}
+            px   = {{ base: 'max(24px, 5%)', md: '40px' }}
+            bg   = {background}
         >
-          Load More
-        </Button>
-      </Grid>
-    </Box>
-  )
+            <FilterModal
+                isOpen        = {isOpen}
+                onClose       = {onClose}
+                fullTimeOnly  = {filteredJobs.fullTimeOnly}
+                locationValue = {filteredJobs.location}
+                dispatch      = {dispatch}
+            />
+
+            <Pattern />
+
+            <Grid
+                templateColumns = {{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }}
+                position        = 'relative'
+                zIndex          = '1'
+                rowGap          = {{ base: '32px', md: '46px', lg: '44px' }}
+                maxW            = '1110px'
+                mx              = {{ base: '0', lg: 'auto' }}
+                pb              = '2em'
+                columnGap       = {{ base: 0, md: '12px', lg: '28px' }}
+            >
+                {/* Logo Area */}
+                <GridItem colSpan={singleColumn} display='flex' justifyContent='space-between'>
+                    <Image
+                        src    = 'assets/devjobs.svg'
+                        alt    = ''
+                        width  = {115}
+                        height = {32}
+                        style  = {{ userSelect: 'none' }}
+                    />
+                    <ThemeToggleButton />
+                </GridItem>
+                {/* #endregion */}
+
+                {/* Input Area */}
+                <ResponsiveSearchBar
+                    queryValue                    = {filteredJobs.query}
+                    locationValue                 = {filteredJobs.location}
+                    fullTimeOnly                  = {filteredJobs.fullTimeOnly}
+                    dispatch                      = {dispatch}
+                    mobile__handleOpenFilterModal = {onOpen}
+                />
+                {/* #endregion */}
+
+                {/* Items */}
+                {
+                    filteredJobs.filtered.map((item, index) => (
+                        <JobCard
+                            key     = {item.id + '-' + index}
+                            company = {item}
+                            order   = {index}
+                        />
+                    ))
+                }
+                {/* #endregion */}
+            </Grid>
+        </Box>
+    )
 }
 export default App
