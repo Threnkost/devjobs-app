@@ -206,6 +206,7 @@ const Detail: NextPage<{ data: Company | undefined }> = ({ data }) => {
                     <Box {...inline} w={{ lg: 'min(90%, 1110px)' }} mb='8px' display='flex' justifyContent='space-between'>
                         <Image
                             src='/assets/devjobs.svg'
+                            alt=''
                             w='115px'
                             h='32px'
                             userSelect='none'
